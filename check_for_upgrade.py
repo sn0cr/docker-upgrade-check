@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Copyright 2020 Sn0cr
 # MIT License
 
@@ -26,10 +27,10 @@ import semver
 import os
 import todoist
 import platform
-from datetime import datetime
+from datetime import date, datetime
 from most_recent_tag import most_recent_tag
 
-
+VERSION = semver.VersionInfo.parse("1.0.0")
 REMINDER_LOCATION = Path("./reminder.json")
 DOCKER_IMAGE = "gitlab/gitlab-ce"
 MESSAGE_TEMPLATE = """Upgrade Gitlab on {hostname} from {current_gitlab_version} to {most_recent_gitlab_version}"""
@@ -42,19 +43,23 @@ def get_last_reminder():
     if REMINDER_LOCATION.exists():
         with REMINDER_LOCATION.open(mode="r") as reminder_file:
             reminder = json.load(reminder_file)
+            reminder["last_checked"] = datetime.fromisoformat(reminder["last_checked"])
         return reminder
     else:
         return {"last_checked": None, "last_version": None, "last_id": None}
 
 
 def save_last_reminder(reminder):
+    reminder['last_checked'] = reminder['last_checked'].isoformat()
     with REMINDER_LOCATION.open(mode="w") as reminder_file:
         json.dump(reminder, reminder_file)
 
 
 def get_gitlab_version():
-    result = subprocess.run(["sudo", "/usr/local/bin/gitlab-version"]).stdout
-    version = result.split(":")[1]
+    result = subprocess.run(["sudo", "/usr/local/bin/gitlab-version"], stdout = subprocess.PIPE)
+    print(result)
+    result_stdout = result.stdout.decode("utf8").strip()
+    version = result_stdout.split(":")[1]
     return version
 
 

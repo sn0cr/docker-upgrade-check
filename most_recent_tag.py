@@ -29,6 +29,7 @@
 import requests
 from semver import VersionInfo, compare
 
+VERSION = VersionInfo.parse("1.0.0")
 
 def get_docker_token(image_name):
     token_url = "https://auth.docker.io/token"

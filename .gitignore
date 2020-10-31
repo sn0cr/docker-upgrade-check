@@ -180,3 +180,4 @@ dmypy.json
 *.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/vscode,osx,python
+reminder.json
