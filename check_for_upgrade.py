@@ -75,7 +75,7 @@ def create_task(current_gitlab_version, most_recent_gitlab_version, last_reminde
     else:
         last_item = None
 
-    if last_item and last_item["checked"] == 0:
+    if last_item and "checked" in last_item and last_item["checked"] == 0:
         last_item.update(content=text, due={"string": TODOIST_DUE})
         todoist_id = last_item["id"]
     else:
@@ -93,6 +93,7 @@ if __name__ == "__main__":
     most_recent_gitlab_version = most_recent_tag(DOCKER_IMAGE)
     last_reminder = get_last_reminder()
     if semver.compare(current_gitlab_version, most_recent_gitlab_version) < 0:
+        print("Upgrade Gitlab!")
         last_reminder["last_checked"] = datetime.now()
         last_reminder["last_version"] = current_gitlab_version
         last_reminder["last_id"] = create_task(
