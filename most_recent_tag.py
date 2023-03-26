@@ -2,7 +2,7 @@
 # Example code to interface Docker api from
 # https://gist.github.com/robv8r/fa66f5e0fdf001f425fe9facf2db6d49
 
-# Copyright 2020 Sn0cr
+# Copyright 2020-2023 Sn0cr
 # MIT License
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,10 +26,12 @@
 # This script ignores all non-semver version tags (see `parse_tags` if you want
 # to change this -- they are ignored as they are not valid semver tags)
 
+from typing import List, Optional
 import requests
 from semver import VersionInfo, compare
 
 VERSION = VersionInfo.parse("1.0.0")
+REGISTRY_URL = "https://registry-1.docker.io"
 
 def get_docker_token(image_name):
     token_url = "https://auth.docker.io/token"
@@ -41,36 +43,44 @@ def get_docker_token(image_name):
         else:
             return None
     except ValueError as ex:
-        print("Docker API did not return JSON: " + ex)
+        print("Docker API did not return JSON: " + str(ex))
 
+def get_paginated_tags(url_suffix: str, headers:dict[str, str]) -> tuple[List[str], Optional[dict[str, str]]]:
+    result = requests.get(REGISTRY_URL + url_suffix, headers=headers)
+    result.raise_for_status()
+    result_json = result.json()
+    return result_json['tags'], result.links.get("next")
 
-def list_tags(image_name, number_of_tags=25):
-    list_url = f"https://registry-1.docker.io/v2/{image_name}/tags/list"
-    if number_of_tags:
-        list_url += f"?n={number_of_tags}"
+def list_tags(image_name: str, number_of_tags: int=100) -> List[str]:
+    list_url = f"/v2/{image_name}/tags/list?n={number_of_tags}"
     token = get_docker_token(image_name)
     headers = {"Accept": "application/json", "Authorization": f"Bearer {token}"}
+    tags: List[str] = []
     try:
-        result = requests.get(list_url, headers=headers)
-        result_json = result.json()
-        return result_json
+        new_tags, next_page = get_paginated_tags(list_url, headers=headers)
+        tags.extend(new_tags)
+        while next_page:
+            new_tags, next_page = get_paginated_tags(next_page['url'], headers=headers)
+            tags.extend(new_tags)
+
     except ValueError as ex:
-        print("Docker API did not return JSON: " + ex)
+        print("Docker API did not return JSON: " + str(ex))
+
+    return tags
 
 
-def parse_tags(image_tags):
+def parse_tags(image_tags: List[str]) -> List[str]:
     from functools import cmp_to_key
-    tags = image_tags["tags"]
-    tags_parsed = []
-    for tag in tags:
+    tags_parsed: List[str] = []
+    for tag in image_tags:
         tag = tag.replace(".ce.", "+")
         if VersionInfo.isvalid(tag):
             tags_parsed.append(tag)
     tags_parsed.sort(key=cmp_to_key(compare))
     return tags_parsed
 
-def most_recent_tag(image_name):
-    tags = list_tags(image_name)
+def most_recent_tag(image_name: str) -> str:
+    tags = list_tags(image_name, number_of_tags=100)
     return parse_tags(tags)[-1]
 
 if __name__ == "__main__":

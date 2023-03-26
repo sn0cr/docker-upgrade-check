@@ -11,9 +11,19 @@ This collection of scripts does two things:
     ```shell
     $ git clone https://github.com/sn0cr/docker-upgrade-check
     ```
-1. Install all requirements with `pipenv`
+1. Create Virtual Env / use direnv
+    * Virtual Env (**On the server**):
+        ```shell
+        python -m venv docker-upgrade-check
+        source docker-upgrade-check/bin/activate
+        ```
+    * direnv (**for development**):
+        ```shell
+        $ direnv allow .
+        ```
+1. Install all requirements with `pip`
     ```shell
-    $ pipenv install
+    $ pip install -r requirements.txt
     ```
 1. You might want to alter the python interpreter at the top of `check_for_upgrade.py`
     to use the pipenv installed python.
@@ -23,7 +33,7 @@ This collection of scripts does two things:
     Description=Check if gitlab is recent
 
     [Service]
-    ExecStart=/home/c/repos/docker-upgrade-check/check_for_upgrade.py
+    ExecStart=<$REPO>docker-upgrade-check/bin/python <$REPO>/docker-upgrade-check/check_for_upgrade.py
     Environment="TODOIST_API_TOKEN='<your_todoist_token>'"
     Environment="TODOIST_PROJECT_ID='<your_project_id>'"
     Type=oneshot
