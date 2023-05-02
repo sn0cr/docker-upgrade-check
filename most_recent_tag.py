@@ -28,9 +28,9 @@
 
 from typing import List, Optional
 import requests
-from semver import VersionInfo, compare
+from semver.version import Version
 
-VERSION = VersionInfo.parse("1.0.0")
+VERSION = Version.parse("1.0.0")
 REGISTRY_URL = "https://registry-1.docker.io"
 
 def get_docker_token(image_name):
@@ -74,9 +74,10 @@ def parse_tags(image_tags: List[str]) -> List[str]:
     tags_parsed: List[str] = []
     for tag in image_tags:
         tag = tag.replace(".ce.", "+")
-        if VersionInfo.isvalid(tag):
+        
+        if Version.is_valid(tag):
             tags_parsed.append(tag)
-    tags_parsed.sort(key=cmp_to_key(compare))
+    tags_parsed.sort(key=lambda x: Version.parse(x))
     return tags_parsed
 
 def most_recent_tag(image_name: str) -> str:
