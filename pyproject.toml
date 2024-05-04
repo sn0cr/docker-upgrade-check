@@ -12,7 +12,7 @@ python = ">= 3.10, < 4.0.0"
 requests = "^2.31.0"
 semver = "^3.0.0"
 todoist-api-python = "^2.0.2"
-pydantic = "^1.10.7"
+pydantic = "^1.10.13"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"
